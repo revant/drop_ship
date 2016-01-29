@@ -6,11 +6,52 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import cstr, flt, getdate, comma_and, cint
+from erpnext.controllers.selling_controller import SellingController
+from frappe.utils import cstr, flt
 
-class DropShipInvoice(Document):
-	pass
+class DropShipInvoice(SellingController):
+    def on_submit(self):
+    	self.make_gl()
+    	
+    def on_cancel(self):
+    	delete_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
 
+    def make_gl(self):
+    	""" # example Passing GL Entry directly on Submit
+    	from erpnext.accounts.general_ledger import make_gl_entries
+        gl_map = []
+
+        gl_map.append(
+            frappe._dict({
+            	"posting_date":self.posting_date,
+            	"fiscal_year":self.fiscal_year,
+                "account": "Debtors - MNT",
+                "party_type": "Customer",
+                "party": "Akshay Bungalow",
+                "debit": flt(0),
+                "credit": flt(10000),
+                "remarks": "Test Journal",
+                "voucher_type": self.doctype,
+                "voucher_no": self.name
+            })
+        )
+
+        gl_map.append(
+            frappe._dict({
+            	"posting_date":self.posting_date,
+            	"fiscal_year":self.fiscal_year,
+                "account": "Cash - MNT",
+                "debit": flt(10000),
+                "credit": flt(0),
+                "remarks": "Test Journal",
+				"voucher_type": self.doctype,
+                "voucher_no": self.name
+            })
+        )
+
+        if gl_map:
+            make_gl_entries(gl_map, cancel=0, adv_adj=0)
+        """
 
 @frappe.whitelist()
 def make_drop_ship_invoice(source_name, target_doc=None, ignore_permissions=False):
