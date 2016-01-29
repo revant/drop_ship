@@ -3,9 +3,9 @@
   "docstatus": 0, 
   "doctype": "Custom Script", 
   "dt": "Sales Order", 
-  "modified": "2016-01-28 23:17:21.096692", 
+  "modified": "2016-01-29 11:44:22.624854", 
   "name": "Sales Order-Client", 
-  "script": "frappe.ui.form.on(\"Sales Order\", \"refresh\", function(frm){\n    frm.add_custom_button(__(\"Drop Ship\"), function() {\n        frappe.model.open_mapped_doc({\n                        method : \"drop_ship.drop_ship.doctype.drop_ship_invoice.drop_ship_invoice.make_drop_ship_invoice\",\n                        frm : cur_frm\n                })\n         })\n});", 
+  "script": "frappe.ui.form.on(\"Sales Order\", \"refresh\", function(frm){\n    frm.add_custom_button(__(\"Drop Ship\"), function() {\n        frappe.model.open_mapped_doc({\n                        method : \"drop_ship.drop_ship.doctype.drop_ship_invoice.drop_ship_invoice.make_drop_ship_invoice\",\n                        frm : cur_frm\n                })\n         },__(\"Make\"))\n});\n", 
   "script_type": "Client"
  }
 ]
