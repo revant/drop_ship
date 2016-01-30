@@ -1,27 +1,4 @@
 // see license.txt
-frappe.ui.form.on("Drop Ship Invoice", {
-	refresh: function(frm) {
-		cur_frm.add_custom_button(__('Sales Order'), this.get_items_from_so, __("Get items from"));
-	},
-	get_items_from_so: function(){
-		frappe.model.map_current_doc({
-			method: "drop_ship.drop_ship.doctype.drop_ship_invoice.drop_ship_invoice.make_drop_ship_invoice",
-			source_doctype: "Sales Order",
-			get_query_filters: {
-				docstatus: 1,
-				status: ["!=", "Lost"],
-				order_type: cur_frm.doc.order_type,
-				customer: cur_frm.doc.customer || undefined,
-				company: cur_frm.doc.company
-			}
-		})
-	}
-});
-
-cur_frm.add_fetch("item_code", "item_name", "item_name");
-cur_frm.add_fetch("item_code", "description", "description");
-cur_frm.add_fetch("item_code", "stock_uom", "stock_uom");
-
 calculate_totals = function(doc) {
 	var items = doc.items || [];
 	doc.total_purchase = 0.0;
@@ -40,11 +17,52 @@ calculate_totals = function(doc) {
 	refresh_field('total_sales');
 }
 
-cur_frm.cscript.refresh = function(doc, dt, dn) {
+frappe.ui.form.on("Drop Ship Invoice", {
+	refresh: function(doc, dt, dn) {
+		cur_frm.add_custom_button(__('Sales Order'), this.sales_order_btn, __("Get items from"));
+		calculate_totals(doc);
+	},
+	sales_order_btn: function() {
+		this.$sales_order_btn = cur_frm.add_custom_button(__('Sales Order'),
+			function() {
+				frappe.model.map_current_doc({
+					method: "erpnext.selling.doctype.sales_order.sales_order.make_sales_invoice",
+					source_doctype: "Sales Order",
+					get_query_filters: {
+						docstatus: 1,
+						status: ["not in", ["Stopped", "Closed"]],
+						per_billed: ["<", 99.99],
+						customer: cur_frm.doc.customer || undefined,
+						company: cur_frm.doc.company
+					}
+				})
+			}, __("Get items from"));
+	},
+	get_items_from_so: function() {
+		frappe.model.map_current_doc({
+			method: "drop_ship.drop_ship.doctype.drop_ship_invoice.drop_ship_invoice.make_drop_ship_invoice",
+			source: cur_frm.doc.name,
+			get_query_filters: {
+				docstatus: 1,
+				status: ["not in", ["Stopped", "Closed"]],
+				per_billed: ["<", 99.99],
+				customer: cur_frm.doc.customer || undefined,
+				company: cur_frm.doc.company
+			}
+		})
+	}
+});
+
+cur_frm.add_fetch("item_code", "item_name", "item_name");
+cur_frm.add_fetch("item_code", "description", "description");
+cur_frm.add_fetch("item_code", "stock_uom", "stock_uom");
+
+
+//cur_frm.cscript.refresh = function(doc, dt, dn) {
 	/*if(!doc.__islocal) {
 		if(doc.docstatus==1 && frappe.model.can_create("Journal Entry")){
     		cur_frm.add_custom_button(__("Make Journal Entry"), make_journal_entry, frappe.boot.doctype_icons["Journal Entry"]);
     	}
     }*/
-    calculate_totals(doc);
-}
+    
+//}
