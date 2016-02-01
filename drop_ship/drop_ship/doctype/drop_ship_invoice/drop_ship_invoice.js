@@ -1,3 +1,4 @@
+
 // see license.txt
 
 var receivable_account = "";
@@ -9,7 +10,6 @@ calculate_totals = function(doc) {
 	doc.purchase_total = 0.0;
 	doc.total = 0.0;
 	for(var i=0;i<items.length;i++) {
-		//if (!items[i].purchase_rate || items[i].purchase_rate == 0.0){
 		frappe.call({
         	method: "frappe.client.get",
         	args: {
@@ -23,30 +23,19 @@ calculate_totals = function(doc) {
 				pr = data.message.price_list_rate;
   	    	}
     	});
-			// frappe.call({
-	  //       	method: "drop_ship.drop_ship.doctype.drop_ship_invoice.drop_ship_invoice.get_item_prices",
-	  //       	args: {
-	  //       		price_list: doc.price_list,
-	  //       		item_code: items[i].item_code
-	  //       	},
-	  //       	callback: function (data) {
-			// 		items[i].purchase_rate = data.message.item_price;
-	  //       	}
-	  //   	});
-		//}
-		items[i].purchase_rate = flt(pr);
+    	items[i].purchase_rate = flt(pr);
+		refresh_field('purchase_rate', doc.items);
 		items[i].amount = flt(flt(items[i].rate) * flt(items[i].qty));
 		doc.total += items[i].amount;
 		items[i].purchase_amount = flt(flt(items[i].purchase_rate) * flt(items[i].qty));
-		//frappe.model.set_value(frm.doctype, frm.docname, "purchase_total", items[i].purchase_amount);
 		doc.purchase_total += items[i].purchase_amount;
 	}
 	doc.total_commission = doc.total - doc.purchase_total;
 	doc.commission_rate = ((doc.total - doc.purchase_total) / doc.total) * 100;
-	refresh_field('purchase_rate');
 	refresh_field('purchase_total');
 	refresh_field('total');
 	refresh_field('purchase_amount');
+	refresh_field('purchase_rate', doc.items);
 }
 
 get_items_from_so = function() {
