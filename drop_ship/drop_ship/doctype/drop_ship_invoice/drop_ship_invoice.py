@@ -23,13 +23,12 @@ class DropShipInvoice(Document):
 		self.make_gl()
 		     	
 	def on_cancel(self):
+		from erpnext.accounts.general_ledger import delete_gl_entries
 		delete_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
   		  
 	def make_gl(self):
-		ac_ctl = AccountsController
 		from erpnext.accounts.general_ledger import make_gl_entries
 		gl_map = []
-		get_gl_dict = ac_ctl.get_gl_dict
 		accounts_list = self.get_account(self.company)
 
 		ia = accounts_list[0].account
