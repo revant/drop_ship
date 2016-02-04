@@ -102,28 +102,28 @@ class DropShipInvoice(Document):
 			, frappe.db.escape(company) , as_dict=1)
 
 		if not income_account:
-			income_account = {"account":"none"}
+			frappe.throw(_("Set Default Income Account in Drop Ship Settings"))
 
 		receivable_account = frappe.db.sql("""select account from `tabDrop Ship Settings Receivable`
 			where company = %s"""\
 			, frappe.db.escape(company) , as_dict=1)
 
 		if not receivable_account:
-			receivable_account = {"account":"none"}
+			frappe.throw(_("Set Default Receivable Account in Drop Ship Settings"))
 		
 		payable_account = frappe.db.sql("""select account from `tabDrop Ship Settings Payable`
 			where company = %s"""\
 			,company , as_dict=1)
 
 		if not payable_account:
-			payable_account = {"account":"none"}
+			frappe.throw(_("Set Default Payable Account in Drop Ship Settings"))
 		
 		cost_center = frappe.db.sql("""select account from `tabDrop Ship Settings Cost Center`
 			where company = %s"""\
 			,company , as_dict=1)
 
 		if not cost_center:
-			cost_center = {"account":"none"}
+			frappe.throw(_("Set Default Cost Center in Drop Ship Settings"))
 		
 		for item in income_account:
 			account_list.append(item or "none")
