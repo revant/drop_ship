@@ -50,8 +50,8 @@ class DropShipInvoice(Document):
 				'debit_in_account_currency': 0,
 				'credit_in_account_currency': 0,
 				'is_opening': "No", # or self.get("is_opening")
-				'party_type': None,
-				'party': None
+				'party_type': "Supplier",
+				'party': self.supplier
 			})
 		)
 		gl_map.append(
