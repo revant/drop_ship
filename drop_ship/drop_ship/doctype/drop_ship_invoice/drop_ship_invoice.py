@@ -19,13 +19,31 @@ from erpnext.controllers.accounts_controller import AccountsController
 
 class DropShipInvoice(Document):
 
+	def on_update(self):
+		self.calculate_totals()
+
 	def on_submit(self):
 		self.make_gl()
 		     	
 	def on_cancel(self):
 		from erpnext.accounts.general_ledger import delete_gl_entries
 		delete_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
-  		  
+
+	def calculate_totals(self):
+		for item in self.items:
+			item.amount = item.rate * item.qty
+			self.total += item.amount
+			item.purchase_rate = flt(frappe.db.get_value("Item Price", 
+				{
+					"price_list": self.price_list,
+					"item_code": item.item_code
+
+				}, "price_list_rate"))
+			item.purchase_amount = item.purchase_rate * item.qty
+			self.purchase_total += item.purchase_amount
+		self.total_commission = self.total - self.purchase_total
+		self.commission_rate = ((self.total - self.purchase_total) / self.total) * 100;
+
 	def make_gl(self):
 		from erpnext.accounts.general_ledger import make_gl_entries
 		gl_map = []
