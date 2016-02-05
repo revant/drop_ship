@@ -31,8 +31,8 @@ class DropShipInvoice(Document):
 
 	def calculate_totals(self):
 		for item in self.items:
-			item.amount = item.rate * item.qty
-			self.total += item.amount
+			item.amount = flt(flt(item.rate) * flt(item.qty))
+			self.total = flt(flt(self.total) + flt(item.amount))
 			if not item.purchase_rate:
 				price_list_rate = frappe.db.get_value("Item Price", 
 				{
@@ -48,9 +48,10 @@ class DropShipInvoice(Document):
 				item.purchase_amount = item.purchase_rate * item.qty
 			else:
 				frappe.throw(_("Enter Purchase Rate for Item {0}".format(item.item_code)))
-			self.purchase_total += item.purchase_amount
+			self.purchase_total = flt(flt(self.purchase_total) + flt(item.purchase_amount))
+
 		self.total_commission = self.total - self.purchase_total
-		self.commission_rate = ((self.total - self.purchase_total) / self.total) * 100;
+		self.commission_rate = (self.total_commission / self.total) * 100
 
 	def make_gl(self):
 		from erpnext.accounts.general_ledger import make_gl_entries
