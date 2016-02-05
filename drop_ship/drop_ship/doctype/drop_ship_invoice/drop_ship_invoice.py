@@ -33,13 +33,21 @@ class DropShipInvoice(Document):
 		for item in self.items:
 			item.amount = item.rate * item.qty
 			self.total += item.amount
-			item.purchase_rate = flt(frappe.db.get_value("Item Price", 
+			if not item.purchase_rate:
+				price_list_rate = frappe.db.get_value("Item Price", 
 				{
 					"price_list": self.price_list,
 					"item_code": item.item_code
 
-				}, "price_list_rate"))
-			item.purchase_amount = item.purchase_rate * item.qty
+				}, "price_list_rate")
+				if price_list_rate:
+					item.purchase_rate = flt(price_list_rate)
+				else:
+					frappe.msgprint(_("Purchase Rate for Item {0} is not in Price List {1}".format(item.item_code, self.price_list)))
+			if item.purchase_rate:
+				item.purchase_amount = item.purchase_rate * item.qty
+			else:
+				frappe.throw(_("Enter Purchase Rate for Item {0}".format(item.item_code)))
 			self.purchase_total += item.purchase_amount
 		self.total_commission = self.total - self.purchase_total
 		self.commission_rate = ((self.total - self.purchase_total) / self.total) * 100;
