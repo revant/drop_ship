@@ -167,18 +167,6 @@ class DropShipInvoice(Document):
 		return account_list
 
 @frappe.whitelist()
-def get_price(self, price_list, item_code=None):
-	if not price_list:
-		frappe.throw(_("Select Price List"))
-	if not item_code:
-		frappe.throw(_("Select Item"))
-
-	return frappe.db.get_value("Item Price", {
-	 			"item_code":item_code,
-	 			"price_list":price_list
-	 		}, "price_list_rate")
-
-@frappe.whitelist()
 def make_drop_ship_invoice(source_name, target_doc=None, ignore_permissions=False):
 	def postprocess(source, target):
 		set_missing_values(source, target)
