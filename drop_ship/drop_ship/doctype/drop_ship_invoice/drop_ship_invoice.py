@@ -30,9 +30,10 @@ class DropShipInvoice(Document):
 		delete_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
 
 	def calculate_totals(self):
+		total = 0.0
+		purchase_total = 0.0
 		for item in self.items:
 			item.amount = flt(flt(item.rate) * flt(item.qty))
-			self.total = flt(flt(self.total) + flt(item.amount))
 			if not item.purchase_rate:
 				price_list_rate = frappe.db.get_value("Item Price", 
 				{
@@ -48,8 +49,13 @@ class DropShipInvoice(Document):
 				item.purchase_amount = item.purchase_rate * item.qty
 			else:
 				frappe.throw(_("Enter Purchase Rate for Item {0}".format(item.item_code)))
-			self.purchase_total = flt(flt(self.purchase_total) + flt(item.purchase_amount))
+			
+			total += flt(item.amount)
+			purchase_total += flt(item.purchase_amount)
 
+		self.total = total
+		self.purchase_total = purchase_total
+		
 		self.total_commission = self.total - self.purchase_total
 		self.commission_rate = (self.total_commission / self.total) * 100
 
