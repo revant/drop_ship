@@ -177,7 +177,7 @@ class DropShipInvoice(Document):
 	
 	def validate_negative_inputs(self):
 		for item in self.items:
-			if item.qty <= 0 or item.purchase_rate <= 0 or item.rate <= 0:
+			if item.qty <= 0 or item.purchase_rate < 0 or item.rate <= 0:
 				frappe.throw(_("Quantity, Purchase Rate or Selling Rate cannot be zero or negative"))
 
 @frappe.whitelist()
