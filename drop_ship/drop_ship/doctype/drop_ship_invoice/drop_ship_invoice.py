@@ -22,6 +22,9 @@ class DropShipInvoice(Document):
 	def on_update(self):
 		self.calculate_totals()
 
+	def validate(self):
+		self.validate_negative_inputs()
+
 	def on_submit(self):
 		self.make_gl()
 		     	
@@ -171,6 +174,11 @@ class DropShipInvoice(Document):
 			account_list.append(item or "none")
 
 		return account_list
+	
+	def validate_negative_inputs(self):
+		for item in self.items:
+			if item.qty <= 0 or item.purchase_rate <= 0 or item.rate <= 0:
+				frappe.throw(_("Quantity, Purchase Rate or Selling Rate cannot be zero or negative"))
 
 @frappe.whitelist()
 def make_drop_ship_invoice(source_name, target_doc=None, ignore_permissions=False):
