@@ -16,13 +16,12 @@ from frappe.model.mapper import get_mapped_doc
 from erpnext.controllers.selling_controller import SellingController
 from erpnext.accounts.utils import get_account_currency
 from erpnext.controllers.accounts_controller import AccountsController
+from drop_ship.drop_ship.doctype.drop_ship_settings.drop_ship_settings import get_account
 
 class DropShipInvoice(Document):
 
 	def on_update(self):
 		self.calculate_totals()
-
-	def validate(self):
 		self.validate_negative_inputs()
 
 	def on_submit(self):
@@ -35,6 +34,9 @@ class DropShipInvoice(Document):
 	def calculate_totals(self):
 		total = 0.0
 		purchase_total = 0.0
+		sales_tax_total = 0.0
+		purchase_tax_total = 0.0
+		accounts_list = get_account(self.company)
 		for item in self.items:
 			item.amount = flt(flt(item.rate) * flt(item.qty))
 			if not item.purchase_rate:
@@ -53,19 +55,36 @@ class DropShipInvoice(Document):
 			else:
 				frappe.throw(_("Enter Purchase Rate for Item {0}".format(item.item_code)))
 			
+			tax_rate = frappe.db.get_value("Item Tax", 
+				{
+					"parent": item.item_code,
+					"tax_type": accounts_list[4].account
+
+				}, "tax_rate")
+			if tax_rate:
+				item.tax_rate = flt(tax_rate)
+			else:
+				frappe.throw(_("Tax Rate for Item {0} is not in Item Master".format(item.item_code)))
+
+			item.purchase_tax_amount = item.purchase_amount * (item.tax_rate/100)
+			item.sales_tax_amount = item.amount * (item.tax_rate/100)
 			total += flt(item.amount)
 			purchase_total += flt(item.purchase_amount)
+			sales_tax_total += flt(item.sales_tax_amount)
+			purchase_tax_total += flt(item.purchase_tax_amount)
 
 		self.total = total
 		self.purchase_total = purchase_total
-		
+		self.sales_tax_total = sales_tax_total
+		self.purchase_tax_total = purchase_tax_total
+
 		self.total_commission = self.total - self.purchase_total
 		self.commission_rate = (self.total_commission / self.total) * 100
 
 	def make_gl(self):
 		from erpnext.accounts.general_ledger import make_gl_entries
 		gl_map = []
-		accounts_list = self.get_account(self.company)
+		accounts_list = get_account(self.company)
 
 		ia = accounts_list[0].account
 		ra = accounts_list[1].account
@@ -129,52 +148,6 @@ class DropShipInvoice(Document):
 		if gl_map:
 			make_gl_entries(gl_map, cancel=0, adv_adj=0)
 
-	def get_account(self, company):
-	
-		account_list = []
-		
-		income_account = frappe.db.sql("""select account from `tabDrop Ship Settings Income`
-			where company = %s"""\
-			, frappe.db.escape(company) , as_dict=1)
-
-		if not income_account:
-			frappe.throw(_("Set Default Income Account in Drop Ship Settings"))
-
-		receivable_account = frappe.db.sql("""select account from `tabDrop Ship Settings Receivable`
-			where company = %s"""\
-			, frappe.db.escape(company) , as_dict=1)
-
-		if not receivable_account:
-			frappe.throw(_("Set Default Receivable Account in Drop Ship Settings"))
-		
-		payable_account = frappe.db.sql("""select account from `tabDrop Ship Settings Payable`
-			where company = %s"""\
-			,company , as_dict=1)
-
-		if not payable_account:
-			frappe.throw(_("Set Default Payable Account in Drop Ship Settings"))
-		
-		cost_center = frappe.db.sql("""select account from `tabDrop Ship Settings Cost Center`
-			where company = %s"""\
-			,company , as_dict=1)
-
-		if not cost_center:
-			frappe.throw(_("Set Default Cost Center in Drop Ship Settings"))
-		
-		for item in income_account:
-			account_list.append(item or "none")
-
-		for item in receivable_account:
-			account_list.append(item or "none")
-
-		for item in payable_account:
-			account_list.append(item or "none")
-
-		for item in cost_center:
-			account_list.append(item or "none")
-
-		return account_list
-	
 	def validate_negative_inputs(self):
 		for item in self.items:
 			if item.qty <= 0 or item.purchase_rate < 0 or item.rate <= 0:

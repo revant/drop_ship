@@ -33,3 +33,11 @@ cur_frm.set_query("account", "cost_center", function(doc, cdt, cdn) {
       ]
    }
 });
+
+cur_frm.set_query("account", "tax_account", function(doc, cdt, cdn) {
+   return{
+      filters: [
+         ['Account', 'is_group', '=', 0],
+      ]
+   }
+});
