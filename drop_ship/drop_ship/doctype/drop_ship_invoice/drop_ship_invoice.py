@@ -29,17 +29,10 @@ class DropShipInvoice(Document):
 		delete_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
 
 	def calculate_totals(self):
-		if not self.total:
-			total = 0.0
-
-		if not self.purchase_total:
-			purchase_total = 0.0
-
-		if not self.sales_tax_total:
-			sales_tax_total = 0.0
-
-		if not self.purchase_tax_total:
-			purchase_tax_total = 0.0
+		total = 0.0
+		purchase_total = 0.0
+		sales_tax_total = 0.0
+		purchase_tax_total = 0.0
 
 		accounts_list = get_account(self.company)
 		for item in self.items:
@@ -106,7 +99,7 @@ class DropShipInvoice(Document):
 				'account': ia,
 				'cost_center': cc,
 				'debit': flt(0),
-				'credit': flt(flt(self.total_commission) - flt(self.purchase_tax_total)) if self.purchase_tax_total else flt(self.total_commission),
+				'credit': flt(flt(self.total_commission) - flt(self.purchase_tax_total)), # if self.purchase_tax_total else flt(self.total_commission)
 				'debit_in_account_currency': 0,
 				'credit_in_account_currency': 0,
 				'is_opening': "No", # or self.get("is_opening")
@@ -142,7 +135,7 @@ class DropShipInvoice(Document):
 				'fiscal_year': self.fiscal_year,
 				'account': pa,
 				'debit': flt(0),
-				'credit': flt(flt(self.purchase_total)  + flt(self.purchase_tax_total)) if self.purchase_tax_total else flt(self.purchase_total),
+				'credit': flt(flt(self.purchase_total)  + flt(self.purchase_tax_total)), # if self.purchase_tax_total else flt(self.purchase_total),
 				'debit_in_account_currency': 0,
 				'credit_in_account_currency': 0,
 				'is_opening': "No", # or self.get("is_opening")
