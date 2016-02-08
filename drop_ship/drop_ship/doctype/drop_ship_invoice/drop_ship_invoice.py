@@ -8,20 +8,17 @@ import frappe
 import frappe.defaults
 from frappe.utils import cint, flt, cstr
 from frappe import _, msgprint, throw
-from erpnext.accounts.party import get_party_account, get_due_date
-from erpnext.controllers.stock_controller import update_gl_entries_after
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-
-from erpnext.controllers.selling_controller import SellingController
-from erpnext.accounts.utils import get_account_currency
-from erpnext.controllers.accounts_controller import AccountsController
 from drop_ship.drop_ship.doctype.drop_ship_settings.drop_ship_settings import get_account
+
 
 class DropShipInvoice(Document):
 
 	def on_update(self):
 		self.calculate_totals()
+
+	def validate(self):
 		self.validate_negative_inputs()
 
 	def on_submit(self):
@@ -32,10 +29,18 @@ class DropShipInvoice(Document):
 		delete_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
 
 	def calculate_totals(self):
-		total = 0.0
-		purchase_total = 0.0
-		sales_tax_total = 0.0
-		purchase_tax_total = 0.0
+		if not self.total:
+			total = 0.0
+
+		if not self.purchase_total:
+			purchase_total = 0.0
+
+		if not self.sales_tax_total:
+			sales_tax_total = 0.0
+
+		if not self.purchase_tax_total:
+			purchase_tax_total = 0.0
+
 		accounts_list = get_account(self.company)
 		for item in self.items:
 			item.amount = flt(flt(item.rate) * flt(item.qty))
@@ -50,7 +55,7 @@ class DropShipInvoice(Document):
 					item.purchase_rate = flt(price_list_rate)
 				else:
 					frappe.msgprint(_("Purchase Rate for Item {0} is not in Price List {1}".format(item.item_code, self.buying_price_list)))
-			if item.purchase_rate:
+			if item.purchase_rate > 0:
 				item.purchase_amount = item.purchase_rate * item.qty
 			else:
 				frappe.throw(_("Enter Purchase Rate for Item {0}".format(item.item_code)))
@@ -101,7 +106,7 @@ class DropShipInvoice(Document):
 				'account': ia,
 				'cost_center': cc,
 				'debit': flt(0),
-				'credit': flt(self.total_commission),
+				'credit': flt(flt(self.total_commission) - flt(self.purchase_tax_total)) if self.purchase_tax_total else flt(self.total_commission),
 				'debit_in_account_currency': 0,
 				'credit_in_account_currency': 0,
 				'is_opening': "No", # or self.get("is_opening")
@@ -137,7 +142,7 @@ class DropShipInvoice(Document):
 				'fiscal_year': self.fiscal_year,
 				'account': pa,
 				'debit': flt(0),
-				'credit': flt(self.purchase_total),
+				'credit': flt(flt(self.purchase_total)  + flt(self.purchase_tax_total)) if self.purchase_tax_total else flt(self.purchase_total),
 				'debit_in_account_currency': 0,
 				'credit_in_account_currency': 0,
 				'is_opening': "No", # or self.get("is_opening")
@@ -150,7 +155,7 @@ class DropShipInvoice(Document):
 
 	def validate_negative_inputs(self):
 		for item in self.items:
-			if item.qty <= 0 or item.purchase_rate < 0 or item.rate <= 0:
+			if item.qty <= 0 or item.rate <= 0:
 				frappe.throw(_("Quantity, Purchase Rate or Selling Rate cannot be zero or negative"))
 
 @frappe.whitelist()
