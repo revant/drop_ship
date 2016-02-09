@@ -11,12 +11,13 @@ from frappe import _, msgprint, throw
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 from drop_ship.drop_ship.doctype.drop_ship_settings.drop_ship_settings import get_drop_ship_settings
-
+from erpnext.utilities.address_and_contact import load_address_and_contact
 
 class DropShipInvoice(Document):
 
 	def on_update(self):
 		self.calculate_totals()
+		self.get_address()
 
 	def validate(self):
 		self.validate_negative_inputs()
@@ -151,6 +152,13 @@ class DropShipInvoice(Document):
 		for item in self.items:
 			if item.qty <= 0 or item.rate <= 0:
 				frappe.throw(_("Quantity, Purchase Rate or Selling Rate cannot be zero or negative"))
+
+	def get_address(self):
+		from erpnext.accounts.party import get_party_details
+		customer_details = get_party_details(self.customer, party_type="Customer")
+		supplier_details = get_party_details(self.supplier, party_type="Supplier")
+		self.address_display = customer_details["address_display"]
+		self.supplier_address_display = supplier_details["address_display"]
 
 @frappe.whitelist()
 def make_drop_ship_invoice(source_name, target_doc=None, ignore_permissions=False):
