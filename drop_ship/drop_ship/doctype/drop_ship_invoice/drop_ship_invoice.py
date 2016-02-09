@@ -10,7 +10,7 @@ from frappe.utils import cint, flt, cstr
 from frappe import _, msgprint, throw
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from drop_ship.drop_ship.doctype.drop_ship_settings.drop_ship_settings import get_account
+from drop_ship.drop_ship.doctype.drop_ship_settings.drop_ship_settings import get_drop_ship_settings
 
 
 class DropShipInvoice(Document):
@@ -23,7 +23,7 @@ class DropShipInvoice(Document):
 
 	def on_submit(self):
 		self.make_gl()
-		     	
+
 	def on_cancel(self):
 		from erpnext.accounts.general_ledger import delete_gl_entries
 		delete_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
@@ -34,11 +34,11 @@ class DropShipInvoice(Document):
 		sales_tax_total = 0.0
 		purchase_tax_total = 0.0
 
-		accounts_list = get_account(self.company)
+		ds_settings = get_drop_ship_settings(self.company)
 		for item in self.items:
 			item.amount = flt(flt(item.rate) * flt(item.qty))
 			if not item.purchase_rate:
-				price_list_rate = frappe.db.get_value("Item Price", 
+				price_list_rate = frappe.db.get_value("Item Price",
 				{
 					"price_list": self.buying_price_list,
 					"item_code": item.item_code
@@ -52,11 +52,11 @@ class DropShipInvoice(Document):
 				item.purchase_amount = item.purchase_rate * item.qty
 			else:
 				frappe.throw(_("Enter Purchase Rate for Item {0}".format(item.item_code)))
-			
-			tax_rate = frappe.db.get_value("Item Tax", 
+
+			tax_rate = frappe.db.get_value("Item Tax",
 				{
 					"parent": item.item_code,
-					"tax_type": accounts_list[4].account
+					"tax_type": ds_settings["tax_account"]
 
 				}, "tax_rate")
 			if tax_rate:
@@ -82,12 +82,12 @@ class DropShipInvoice(Document):
 	def make_gl(self):
 		from erpnext.accounts.general_ledger import make_gl_entries
 		gl_map = []
-		accounts_list = get_account(self.company)
+		ds_settings = get_drop_ship_settings(self.company)
 
-		ia = accounts_list[0].account
-		ra = accounts_list[1].account
-		pa = accounts_list[2].account
-		cc = accounts_list[3].account
+		ia = ds_settings["income_account"]
+		ra = ds_settings["receivable_account"]
+		pa = ds_settings["payable_account"]
+		cc = ds_settings["cost_center"]
 		gl_map.append(
 			frappe._dict({
 				'company': self.company,

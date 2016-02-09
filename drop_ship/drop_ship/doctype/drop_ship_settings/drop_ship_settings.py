@@ -72,58 +72,46 @@ class DropShipSettings(Document):
 				frappe.throw(_("Account does not match with Company for Default Tax Account"))
 
 @frappe.whitelist()
-def get_account(company):
-	
-	account_list = []
-	
-	income_account = frappe.db.sql("""select account from `tabDrop Ship Settings Income`
-		where company = %s"""\
-		,frappe.db.escape(company) , as_dict=1)
+def get_drop_ship_settings(company):
+	"""Return Drop Ship Settings for Company -
+	income_account, receivable_account, payable_account, tax_account and cost_center"""
 
-	if not income_account:
+	out = {
+		"income_account" : frappe.db.get_value("Drop Ship Settings Income",
+		{
+			"company": company
+		}, "account"),
+		"receivable_account" :frappe.db.get_value("Drop Ship Settings Receivable",
+		{
+			"company": company
+		}, "account"),
+		"payable_account" :frappe.db.get_value("Drop Ship Settings Payable",
+		{
+			"company": company
+		}, "account"),
+		"tax_account" :frappe.db.get_value("Drop Ship Settings Tax",
+		{
+			"company": company
+		}, "account"),
+		"cost_center" :frappe.db.get_value("Drop Ship Settings Cost Center",
+		{
+			"company": company
+		}, "account"),
+	}
+
+	if not out["income_account"]:
 		frappe.throw(_("Set Default Income Account in Drop Ship Settings"))
-	
-	for item in income_account:
-		account_list.append(item or "none")
 
-	receivable_account = frappe.db.sql("""select account from `tabDrop Ship Settings Receivable`
-		where company = %s"""\
-		,frappe.db.escape(company) , as_dict=1)
-
-	if not receivable_account:
+	if not out["receivable_account"]:
 		frappe.throw(_("Set Default Receivable Account in Drop Ship Settings"))
 
-	for item in receivable_account:
-		account_list.append(item or "none")
-
-	payable_account = frappe.db.sql("""select account from `tabDrop Ship Settings Payable`
-		where company = %s"""\
-		,frappe.db.escape(company) , as_dict=1)
-
-	if not payable_account:
+	if not out["payable_account"]:
 		frappe.throw(_("Set Default Payable Account in Drop Ship Settings"))
 
-	for item in payable_account:
-		account_list.append(item or "none")
-
-	cost_center = frappe.db.sql("""select account from `tabDrop Ship Settings Cost Center`
-		where company = %s"""\
-		,frappe.db.escape(company) , as_dict=1)
-
-	if not cost_center:
-		frappe.throw(_("Set Default Cost Center in Drop Ship Settings"))
-
-	for item in cost_center:
-		account_list.append(item or "none")
-
-	tax_account = frappe.db.sql("""select account from `tabDrop Ship Settings Tax`
-		where company = %s"""\
-		,frappe.db.escape(company) , as_dict=1)
-
-	if not tax_account:
+	if not out["tax_account"]:
 		frappe.throw(_("Set Default Tax Account in Drop Ship Settings"))
 
-	for item in tax_account:
-		account_list.append(item or "none")
+	if not out["cost_center"]:
+		frappe.throw(_("Set Default Cost Center in Drop Ship Settings"))
 
-	return account_list
+	return out
