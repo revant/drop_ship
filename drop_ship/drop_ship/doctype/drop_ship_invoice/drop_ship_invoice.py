@@ -15,6 +15,10 @@ from erpnext.utilities.address_and_contact import load_address_and_contact
 
 class DropShipInvoice(Document):
 
+	def onload(self):
+		self.calculate_totals()
+		self.get_address()
+
 	def on_update(self):
 		self.calculate_totals()
 		self.get_address()
