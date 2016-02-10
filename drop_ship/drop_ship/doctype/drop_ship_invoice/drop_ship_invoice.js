@@ -20,5 +20,6 @@ refresh: function(doc) {
 });
 
 cur_frm.add_fetch("item_code", "stock_uom", "stock_uom");
+cur_frm.add_fetch("company", "default_currency", "company_currency");
 cur_frm.add_fetch("customer", "customer_name", "customer_name");
 cur_frm.add_fetch("supplier", "supplier_name", "supplier_name");
