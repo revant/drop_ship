@@ -8,22 +8,16 @@ import frappe
 import frappe.defaults
 from frappe.utils import cint, flt, cstr
 from frappe import _, msgprint, throw
-from frappe.model.document import Document
+from frappe.model.document import Document, get_doc
 from frappe.model.mapper import get_mapped_doc
 from drop_ship.drop_ship.doctype.drop_ship_settings.drop_ship_settings import get_drop_ship_settings
 from erpnext.utilities.address_and_contact import load_address_and_contact
 
 class DropShipInvoice(Document):
 
-	def onload(self):
-		self.calculate_totals()
-		self.get_address()
-
-	def on_update(self):
-		self.calculate_totals()
-		self.get_address()
-
 	def validate(self):
+		self.get_address()
+		self.calculate_totals()
 		self.validate_negative_inputs()
 
 	def on_submit(self):
