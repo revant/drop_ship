@@ -66,7 +66,7 @@ class DropShipInvoice(Document):
 
 			item.purchase_tax_amount = item.purchase_amount * (item.tax_rate/100)
 			item.sales_tax_amount = item.amount * (1 - (1/(1+(item.tax_rate/100)))) # Sales Rate includes tax
-			item.selling_rate_excluding_tax = item.rate - item.sales_tax_amount/item.qty # Sales Rate excluding tax displayed
+			item.selling_rate_excluding_tax = item.rate - (item.sales_tax_amount/item.qty) # Sales Rate excluding tax displayed
 			total += flt(item.amount)
 			purchase_total += flt(item.purchase_amount)
 			sales_tax_total += flt(item.sales_tax_amount)
