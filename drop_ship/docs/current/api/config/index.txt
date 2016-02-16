@@ -1,0 +1,3 @@
+drop_ship.config
+drop_ship.config.desktop
+drop_ship.config.docs

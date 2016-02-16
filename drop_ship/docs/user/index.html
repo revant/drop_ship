@@ -1,0 +1,35 @@
+<!-- title: Drop Ship User Docs -->
+<!-- no-breadcrumbs -->
+<p>
+Drop Ship is Frappe app for drop shipping businesses. It is to be used along with ERPNext.
+It extends ERPNext for business whose suppliers directly ships to customer. This app processes sales orders into drop ship invoices.
+</p>
+
+<p>Currently the effect on GL on submit of Drop Ship Invoice is </p>
+<ol>
+<li>Receivable account Dr .... Total selling price</li>
+<ol>
+	<li>To Income account .... Total selling price - (Purchase price + Purchase tax)</li>
+	<li>To Payable account .... Purchase price total + Purchase tax total</li>
+</ol>
+</ol>
+This App cannot be used separately and only be used along with ERPNext.
+</p>
+<p>
+Drop Ship creates a desk icon for the module. Setup Section has drop ship settings for setting Default Accounts and cost centers for company.
+</p>
+<p>
+Before using :
+</p>
+<ol>
+	<li><strong>Set Price Lists</strong> - Buying price list is required for auto populating Purchase prices for drop ship invoice</li>
+	<li><strong>Set Item Tax</strong> - Set item tax rate in Item master and set default tax account for company in drop ship settings. This is required to set item tax in drop ship invoice items.</li>
+</ol>
+
+<h3>Contents</h3>
+
+{index}
+
+<!-- autodoc -->
+<!-- jinja -->
+<!-- static -->
