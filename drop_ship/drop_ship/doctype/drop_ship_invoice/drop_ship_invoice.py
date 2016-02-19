@@ -12,7 +12,7 @@ from frappe.model.document import Document, get_doc
 from frappe.model.mapper import get_mapped_doc
 from drop_ship.drop_ship.doctype.drop_ship_settings.drop_ship_settings import get_drop_ship_settings
 from erpnext.accounts.utils import get_account_currency
-
+from erpnext.controllers.accounts_controller import set_balance_in_account_currency
 
 class DropShipInvoice(Document):
 
@@ -52,8 +52,8 @@ class DropShipInvoice(Document):
 				item.purchase_amount = item.purchase_rate * item.qty
 			else:
 				frappe.throw(_("Enter Purchase Rate for Item {0}".format(item.item_code)))
-
 			tax_rate = frappe.db.get_value("Item Tax",
+
 				{
 					"parent": item.item_code,
 					"tax_type": ds_settings["tax_account"]
@@ -108,7 +108,7 @@ class DropShipInvoice(Document):
 		})
 		if not account_currency:
 			account_currency = get_account_currency(gl_dict.account)
-		self.set_balance_in_account_currency(gl_dict, account_currency)
+		set_balance_in_account_currency(gl_dict, account_currency, self.conversion_rate, self.company_currency)
 		gl_map.append(gl_dict)
 
 		gl_dict = frappe._dict({
@@ -129,7 +129,7 @@ class DropShipInvoice(Document):
 		})
 		if not account_currency:
 			account_currency = get_account_currency(gl_dict.account)
-		self.set_balance_in_account_currency(gl_dict, account_currency)
+		set_balance_in_account_currency(gl_dict, account_currency, self.conversion_rate, self.company_currency)
 		gl_map.append(gl_dict)
 
 		gl_dict = frappe._dict({
@@ -150,7 +150,8 @@ class DropShipInvoice(Document):
 		})
 		if not account_currency:
 			account_currency = get_account_currency(gl_dict.account)
-		self.set_balance_in_account_currency(gl_dict, account_currency)
+
+		set_balance_in_account_currency(gl_dict, account_currency, self.conversion_rate, self.company_currency)
 		gl_map.append(gl_dict)
 
 		if gl_map:
@@ -167,22 +168,6 @@ class DropShipInvoice(Document):
 		supplier_details = get_party_details(self.supplier, party_type="Supplier")
 		self.address_display = customer_details["address_display"]
 		self.supplier_address_display = supplier_details["address_display"]
-
-	def set_balance_in_account_currency(self, gl_dict, account_currency=None):
-		if (not self.get("conversion_rate") and account_currency!=self.company_currency):
-			frappe.throw(_("Account: {0} with currency: {1} can not be selected").format(gl_dict.account, account_currency))
-
-		gl_dict["account_currency"] = self.company_currency if account_currency==self.company_currency \
-			else account_currency
-
-		# set debit/credit in account currency if not provided
-		if flt(gl_dict.debit) and not flt(gl_dict.debit_in_account_currency):
-			gl_dict.debit_in_account_currency = gl_dict.debit if account_currency==self.company_currency \
-				else flt(gl_dict.debit / (self.get("conversion_rate")), 2)
-
-		if flt(gl_dict.credit) and not flt(gl_dict.credit_in_account_currency):
-			gl_dict.credit_in_account_currency = gl_dict.credit if account_currency==self.company_currency \
-				else flt(gl_dict.credit / (self.get("conversion_rate")), 2)
 
 @frappe.whitelist()
 def make_drop_ship_invoice(source_name, target_doc=None, ignore_permissions=False):
