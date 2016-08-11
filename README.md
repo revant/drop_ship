@@ -1,4 +1,4 @@
-## Drop Ship
+## Drop Ship (Deprecated)
 
 Drop Ship App for ERPNext
 
